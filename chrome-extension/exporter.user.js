@@ -1039,7 +1039,12 @@
         const resolvedWorkspaceId = resolveWorkspaceId(workspaceId);
         if (resolvedWorkspaceId) { headers['ChatGPT-Account-Id'] = resolvedWorkspaceId; }
         const r = await fetch(`/backend-api/conversation/${id}`, { headers });
-        if (!r.ok) throw new Error(`获取对话详情失败 conv ${id} (${r.status})`);
+        if (!r.ok) {
+            if (r.status === 429) {
+                throw new Error(`获取对话详情失败 conv ${id}：官方接口限流 (429)。请降低导出频率、减少单次导出的对话数量，等待几分钟后再试。`);
+            }
+            throw new Error(`获取对话详情失败 conv ${id} (${r.status})`);
+        }
         const j = await r.json();
         j.__fetched_at = new Date().toISOString();
         return j;
